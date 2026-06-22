@@ -1,0 +1,10 @@
+services:
+  hardhat-mainnet:
+    image: cp-contracts-docker-hardhat:dev
+    pull_policy: never
+
+  hardhat:
+    build:
+      context: ./traceability-contracts
+      dockerfile: Dockerfile
+    image: cp-contracts-docker-hardhat:dev

@@ -1,0 +1,6 @@
+services:
+  hardhat-mainnet:
+    image: ${DOCKERHUB_IMAGE:?Set DOCKERHUB_IMAGE}:${IMAGE_TAG:-latest}
+
+  hardhat:
+    image: ${DOCKERHUB_IMAGE:?Set DOCKERHUB_IMAGE}:${IMAGE_TAG:-latest}

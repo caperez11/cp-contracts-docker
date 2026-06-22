@@ -1,0 +1,28 @@
+{
+  "name": "traceability-contracts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "hardhat build",
+    "test": "hardhat test",
+    "typecheck": "tsc --noEmit",
+    "node:hardhat-mainnet": "hardhat node --network hardhatMainnet --hostname 0.0.0.0 --port 8546",
+    "deploy:ganache": "hardhat run --network ganache scripts/deploy.ts",
+    "certify:ganache": "hardhat run --network ganache scripts/certify-hash.ts",
+    "verify:ganache": "hardhat run --network ganache scripts/verify-hash.ts",
+    "certificate:ganache": "hardhat run --network ganache scripts/get-certificate.ts",
+    "deploy:hardhat-mainnet": "hardhat run --network hardhatMainnetRpc scripts/deploy.ts",
+    "certify:hardhat-mainnet": "hardhat run --network hardhatMainnetRpc scripts/certify-hash.ts",
+    "verify:hardhat-mainnet": "hardhat run --network hardhatMainnetRpc scripts/verify-hash.ts",
+    "certificate:hardhat-mainnet": "hardhat run --network hardhatMainnetRpc scripts/get-certificate.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ignition": "^3.1.7",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.7",
+    "@types/node": "^22.20.0",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.4",
+    "hardhat": "^3.9.0",
+    "typescript": "~6.0.3",
+    "viem": "^2.53.1"
+  }
+}

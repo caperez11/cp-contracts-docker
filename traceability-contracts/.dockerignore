@@ -1,0 +1,17 @@
+node_modules
+artifacts
+cache
+coverage
+dist
+bundle
+types
+ignition/deployments
+.gas-snapshot
+snapshots
+.env
+.env.*
+!.env.example
+.git
+.github
+.DS_Store
+*.log

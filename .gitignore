@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Hardhat build artifacts
+traceability-contracts/artifacts/
+traceability-contracts/cache/
+traceability-contracts/coverage/
+traceability-contracts/dist/
+traceability-contracts/types/
+traceability-contracts/ignition/deployments/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Docker volumes / data
+ganache-data/
+*.pid
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Test and temporary output
+tmp/
+temp/
+.nyc_output/
