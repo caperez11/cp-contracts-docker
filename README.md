@@ -504,49 +504,189 @@ docker compose -f compose.yml -f compose.dev.yml down -v
 docker compose -f compose.yml -f compose.dev.yml up -d --build
 ```
 
-## 10. Usar la imagen descargada de Docker Hub
+## 10. Usar la imagen desde Docker Hub
 
-Imagen: `caperezdev11/cp-contracts-docker`
+Esta sección explica cómo usar la imagen `caperezdev11/cp-contracts-docker`
+ya publicada en Docker Hub. No necesitas clonar el repositorio.
 
-### Requisitos
+### 10.1 Requisitos
 
 - Docker
+- Docker Compose
 
-### Descargar la imagen
+### 10.2 Escenario A: Docker Compose local
+
+Descarga `compose.yml` y `compose.release.yml` del repositorio:
 
 ```bash
-docker pull caperezdev11/cp-contracts-docker:latest
+curl -O https://raw.githubusercontent.com/caperez11/cp-contracts-docker/main/compose.yml
+curl -O https://raw.githubusercontent.com/caperez11/cp-contracts-docker/main/compose.release.yml
 ```
 
-### Iniciar Ganache local
+O clona el repositorio si prefieres:
 
 ```bash
-docker run -d --name logistics-ganache \
-  -p 8545:8545 \
-  trufflesuite/ganache:latest:latest
+git clone https://github.com/caperez11/cp-contracts-docker.git
+cd cp-contracts-docker
 ```
 
-### Flujo con Ganache
-
-**1. Desplegar contrato:**
+#### Iniciar el entorno
 
 ```bash
-docker run --rm \
-  --network host \
-  -e CONTRACT_ADDRESS \
-  caperezdev11/cp-contracts-docker:latest \
-  pnpm deploy:ganache
+docker compose -f compose.yml -f compose.release.yml pull
+docker compose -f compose.yml -f compose.release.yml up -d
+docker compose -f compose.release.yml ps
+```
+
+Verás tres servicios:
+
+```text
+logistics-ganache      # Blockchain en puerto 8545
+logistics-hardhat     # Hardhat en puerto 8545
+logistics-hardhat-mainnet  # hardhatMainnet en puerto 8546
+```
+
+#### Scripts disponibles
+
+| Script | Descripción |
+|--------|-------------|
+| `pnpm deploy:ganache` | Despliega contrato en Ganache |
+| `pnpm certify:ganache` | Certifica el hash del evento |
+| `pnpm verify:ganache` | Verifica integridad (original y alterado) |
+| `pnpm certificate:ganache` | Consulta el certificado |
+| `pnpm deploy:hardhat-mainnet` | Despliega contrato en hardhatMainnet |
+| `pnpm certify:hardhat-mainnet` | Certifica en hardhatMainnet |
+| `pnpm verify:hardhat-mainnet` | Verifica en hardhatMainnet |
+| `pnpm certificate:hardhat-mainnet` | Consulta en hardhatMainnet |
+
+#### Flujo completo con Ganache
+
+**1. Desplegar:**
+
+```bash
+docker compose -f compose.release.yml exec hardhat pnpm deploy:ganache
 ```
 
 Copia la dirección del contrato.
 
-**2. Exportar dirección:**
+**2. Exportar:**
 
 ```bash
 export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
 ```
 
-**3. Certificar evento:**
+**3. Certificar:**
+
+```bash
+docker compose -f compose.release.yml exec \
+  -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
+  hardhat pnpm certify:ganache
+```
+
+**4. Verificar:**
+
+```bash
+docker compose -f compose.release.yml exec \
+  -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
+  hardhat pnpm verify:ganache
+```
+
+**5. Consultar:**
+
+```bash
+docker compose -f compose.release.yml exec \
+  -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
+  hardhat pnpm certificate:ganache
+```
+
+#### Flujo completo con hardhatMainnet
+
+**1. Desplegar:**
+
+```bash
+docker compose -f compose.release.yml exec hardhat pnpm deploy:hardhat-mainnet
+```
+
+Copia la dirección.
+
+**2. Exportar:**
+
+```bash
+export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
+```
+
+**3. Certificar:**
+
+```bash
+docker compose -f compose.release.yml exec \
+  -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
+  hardhat pnpm certify:hardhat-mainnet
+```
+
+**4. Verificar:**
+
+```bash
+docker compose -f compose.release.yml exec \
+  -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
+  hardhat pnpm verify:hardhat-mainnet
+```
+
+**5. Consultar:**
+
+```bash
+docker compose -f compose.release.yml exec \
+  -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
+  hardhat pnpm certificate:hardhat-mainnet
+```
+
+#### Detener
+
+```bash
+docker compose -f compose.yml -f compose.release.yml down
+```
+
+Con volúmenes (reinicia blockchain):
+
+```bash
+docker compose -f compose.yml -f compose.release.yml down -v
+```
+
+### 10.3 Escenario B: Solo Docker (sin compose)
+
+Descarga la imagen directamente:
+
+```bash
+docker pull caperezdev11/cp-contracts-docker:latest
+```
+
+#### Iniciar Ganache
+
+```bash
+docker run -d --name logistics-ganache \
+  -p 8545:8545 \
+  trufflesuite/ganache:latest
+```
+
+#### Flujo completo
+
+**1. Desplegar:**
+
+```bash
+docker run --rm \
+  --network host \
+  caperezdev11/cp-contracts-docker:latest \
+  pnpm deploy:ganache
+```
+
+Copia la dirección.
+
+**2. Exportar:**
+
+```bash
+export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
+```
+
+**3. Certificar:**
 
 ```bash
 docker run --rm \
@@ -556,7 +696,7 @@ docker run --rm \
   pnpm certify:ganache
 ```
 
-**4. Verificar integridad:**
+**4. Verificar:**
 
 ```bash
 docker run --rm \
@@ -566,14 +706,7 @@ docker run --rm \
   pnpm verify:ganache
 ```
 
-Resultado esperado:
-
-```text
-Hash original valido: true
-Hash alterado valido: false
-```
-
-**5. Consultar certificado:**
+**5. Consultar:**
 
 ```bash
 docker run --rm \
@@ -583,7 +716,7 @@ docker run --rm \
   pnpm certificate:ganache
 ```
 
-### Detener servicios
+#### Detener
 
 ```bash
 docker stop logistics-ganache
