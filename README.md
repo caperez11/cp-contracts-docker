@@ -465,24 +465,7 @@ docker compose -f compose.yml -f compose.dev.yml down -v
 | Verificar | `pnpm verify:ganache` | `pnpm verify:hardhat-mainnet` |
 | Consultar | `pnpm certificate:ganache` | `pnpm certificate:hardhat-mainnet` |
 
-## 9. Validaciones realizadas
-
-| Entorno | Red | Deploy | Certify | Verify | Consulta |
-|---|---|---:|---:|---:|---:|
-| Host local | Ganache | OK | OK | OK | OK |
-| Host local | hardhatMainnet | OK | OK | OK | OK |
-| Docker Compose | Ganache | OK | OK | OK | OK |
-| Docker Compose | hardhatMainnet | OK | OK | OK | OK |
-
-El build de la imagen también ejecuta:
-
-```bash
-pnpm build
-pnpm typecheck
-pnpm test
-```
-
-## 10. Problemas comunes
+## 9. Problemas comunes
 
 ### `CONTRACT_ADDRESS is required`
 
@@ -521,7 +504,7 @@ docker compose -f compose.yml -f compose.dev.yml down -v
 docker compose -f compose.yml -f compose.dev.yml up -d --build
 ```
 
-## 11. Descargar y usar la imagen desde Docker Hub
+## 10. Descargar y usar la imagen desde Docker Hub
 
 La imagen se publica automáticamente con cada `push` a `main` en:
 `USUARIO_DOCKERHUB/cp-contracts-docker`
