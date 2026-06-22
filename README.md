@@ -533,9 +533,22 @@ cd cp-contracts-docker
 
 ### 10.3 Iniciar el entorno
 
-Descarga la imagen y levanta los servicios:
+**Usuarios con Apple Silicon (M1/M2/M3):** Primero descarga la imagen con platform:
 
 ```bash
+docker pull --platform linux/amd64 caperezdev11/cp-contracts-docker:latest
+```
+
+**Usuarios Intel/AMD:**可以直接:
+
+```bash
+export DOCKERHUB_IMAGE=caperezdev11/cp-contracts-docker
+export IMAGE_TAG=latest
+```
+
+```bash
+export DOCKERHUB_IMAGE=caperezdev11/cp-contracts-docker
+export IMAGE_TAG=latest
 docker compose -f compose.yml -f compose.release.yml up -d
 docker compose -f compose.release.yml ps
 ```
