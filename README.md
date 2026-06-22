@@ -521,7 +521,6 @@ Descarga los archivos necesarios:
 ```bash
 curl -O https://raw.githubusercontent.com/caperez11/cp-contracts-docker/main/compose.yml
 curl -O https://raw.githubusercontent.com/caperez11/cp-contracts-docker/main/compose.release.yml
-curl -O https://raw.githubusercontent.com/caperez11/cp-contracts-docker/main/.env.example
 ```
 
 O clona el repositorio si prefieres tener todo local:
@@ -539,18 +538,18 @@ cd cp-contracts-docker
 docker pull --platform linux/amd64 caperezdev11/cp-contracts-docker:latest
 ```
 
-**Usuarios Intel/AMD:**可以直接:
+Exporta las variables de entorno:
 
 ```bash
 export DOCKERHUB_IMAGE=caperezdev11/cp-contracts-docker
 export IMAGE_TAG=latest
 ```
 
+Levanta el entorno:
+
 ```bash
-export DOCKERHUB_IMAGE=caperezdev11/cp-contracts-docker
-export IMAGE_TAG=latest
 docker compose -f compose.yml -f compose.release.yml up -d
-docker compose -f compose.release.yml ps
+docker compose -f compose.yml -f compose.release.yml ps
 ```
 
 Verás tres servicios:
@@ -585,7 +584,7 @@ docker compose -f compose.release.yml exec hardhat pnpm <script>
 **1. Desplegar el contrato:**
 
 ```bash
-docker compose -f compose.release.yml exec hardhat pnpm deploy:ganache
+docker compose -f compose.yml -f compose.release.yml exec hardhat pnpm deploy:ganache
 ```
 
 Salida esperada:
@@ -606,7 +605,7 @@ export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
 **3. Certificar el evento:**
 
 ```bash
-docker compose -f compose.release.yml exec \
+docker compose -f compose.yml -f compose.release.yml exec \
   -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certify:ganache
 ```
@@ -623,7 +622,7 @@ Transaccion: 0x...
 **4. Verificar integridad:**
 
 ```bash
-docker compose -f compose.release.yml exec \
+docker compose -f compose.yml -f compose.release.yml exec \
   -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm verify:ganache
 ```
@@ -638,7 +637,7 @@ Hash alterado valido: false
 **5. Consultar el certificado:**
 
 ```bash
-docker compose -f compose.release.yml exec \
+docker compose -f compose.yml -f compose.release.yml exec \
   -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certificate:ganache
 ```
@@ -659,7 +658,7 @@ Salida esperada:
 **1. Desplegar:**
 
 ```bash
-docker compose -f compose.release.yml exec hardhat pnpm deploy:hardhat-mainnet
+docker compose -f compose.yml -f compose.release.yml exec hardhat pnpm deploy:hardhat-mainnet
 ```
 
 Copia la dirección.
@@ -673,7 +672,7 @@ export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
 **3. Certificar:**
 
 ```bash
-docker compose -f compose.release.yml exec \
+docker compose -f compose.yml -f compose.release.yml exec \
   -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certify:hardhat-mainnet
 ```
@@ -681,7 +680,7 @@ docker compose -f compose.release.yml exec \
 **4. Verificar:**
 
 ```bash
-docker compose -f compose.release.yml exec \
+docker compose -f compose.yml -f compose.release.yml exec \
   -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm verify:hardhat-mainnet
 ```
@@ -689,7 +688,7 @@ docker compose -f compose.release.yml exec \
 **5. Consultar:**
 
 ```bash
-docker compose -f compose.release.yml exec \
+docker compose -f compose.yml -f compose.release.yml exec \
   -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certificate:hardhat-mainnet
 ```
@@ -713,8 +712,8 @@ docker compose -f compose.yml -f compose.release.yml down -v
 Revisa los logs de los servicios:
 
 ```bash
-docker compose -f compose.release.yml logs ganache
-docker compose -f compose.release.yml logs hardhat
+docker compose -f compose.yml -f compose.release.yml logs ganache
+docker compose -f compose.yml -f compose.release.yml logs hardhat
 ```
 
 Verificar que Ganache está escuchando:
@@ -736,7 +735,7 @@ Respuesta esperada:
 Si solo quieres ejecutar los tests sin preocuparte del flujo:
 
 ```bash
-docker compose -f compose.release.yml exec hardhat pnpm test
+docker compose -f compose.yml -f compose.release.yml exec hardhat pnpm test
 ```
 
 Salida esperada:
