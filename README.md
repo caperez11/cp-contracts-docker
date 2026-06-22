@@ -521,160 +521,19 @@ docker compose -f compose.yml -f compose.dev.yml down -v
 docker compose -f compose.yml -f compose.dev.yml up -d --build
 ```
 
-## 11. Publicar la imagen en Docker Hub con GitHub Actions
+## 11. Descargar y usar la imagen desde Docker Hub
 
-El workflow
-`.github/workflows/publish-dockerhub.yml` se ejecuta automáticamente con cada
-`push` a la rama `main`. También puede ejecutarse manualmente desde la pestaña
-**Actions** de GitHub.
+La imagen se publica automáticamente con cada `push` a `main` en:
+`USUARIO_DOCKERHUB/cp-contracts-docker`
 
-Antes de publicar, el workflow ejecuta:
+### Requisitos
 
-```bash
-pnpm install --frozen-lockfile
-pnpm build
-pnpm typecheck
-pnpm test
-```
+- Docker
+- Docker Compose
 
-Si alguna validación falla, la imagen no se publica.
+### Descargar e iniciar el entorno
 
-### Paso 1: crear el repositorio en Docker Hub
-
-1. Inicia sesión en [Docker Hub](https://hub.docker.com/).
-2. Selecciona **Create repository**.
-3. Usa el nombre `cp-contracts-docker`.
-4. Selecciona visibilidad pública o privada.
-5. Crea el repositorio.
-
-La imagen tendrá este formato:
-
-```text
-USUARIO_DOCKERHUB/cp-contracts-docker:TAG
-```
-
-### Paso 2: crear un access token en Docker Hub
-
-1. Abre **Account settings**.
-2. Entra en **Personal access tokens**.
-3. Crea un token con permiso de lectura y escritura.
-4. Copia el token. Docker Hub solo lo muestra una vez.
-
-No utilices la contraseña de la cuenta en GitHub.
-
-### Paso 3: configurar los secretos en GitHub
-
-En el repositorio de GitHub:
-
-1. Abre **Settings**.
-2. Entra en **Secrets and variables** → **Actions**.
-3. Selecciona **New repository secret**.
-4. Crea estos secretos:
-
-| Secreto | Valor |
-|---|---|
-| `DOCKERHUB_USERNAME` | Tu usuario de Docker Hub |
-| `DOCKERHUB_TOKEN` | El access token creado en Docker Hub |
-
-Estos dos secretos son obligatorios. Sin ellos el workflow no puede iniciar
-sesión ni publicar la imagen.
-
-### Paso 4: asignar una versión
-
-La versión se obtiene de:
-
-```text
-traceability-contracts/package.json
-```
-
-Ejemplo:
-
-```json
-{
-  "version": "1.0.0"
-}
-```
-
-Antes de publicar una nueva versión, actualiza ese campo. Desde
-`traceability-contracts` puedes incrementar el patch:
-
-```bash
-pnpm version patch --no-git-tag-version
-```
-
-Después valida:
-
-```bash
-pnpm build
-pnpm typecheck
-pnpm test
-```
-
-### Paso 5: publicar
-
-Guarda los cambios y envíalos a `main`:
-
-```bash
-git add .
-git commit -m "release: publish Docker image"
-git push origin main
-```
-
-En GitHub abre:
-
-```text
-Actions → Publish Docker image
-```
-
-El workflow publica tres tags:
-
-| Tag | Ejemplo | Uso |
-|---|---|---|
-| `latest` | `latest` | Último build de `main` |
-| Versión | `1.0.0` | Versión indicada en `package.json` |
-| Inmutable | `1.0.0-a1b2c3d` | Versión asociada al commit |
-
-El tag inmutable permite identificar exactamente qué commit creó la imagen.
-
-### Paso 6: comprobar la imagen publicada
-
-Define la imagen y la versión:
-
-```bash
-export DOCKERHUB_IMAGE=USUARIO_DOCKERHUB/cp-contracts-docker
-export IMAGE_TAG=1.0.0
-```
-
-Si el repositorio es privado, inicia sesión primero:
-
-```bash
-docker login
-```
-
-Descarga la imagen:
-
-```bash
-docker pull "$DOCKERHUB_IMAGE:$IMAGE_TAG"
-```
-
-Ejecuta las pruebas incluidas:
-
-```bash
-docker run --rm "$DOCKERHUB_IMAGE:$IMAGE_TAG" pnpm test
-```
-
-Debes obtener:
-
-```text
-7 passing (5 solidity, 2 nodejs)
-```
-
-### Paso 7: probar la imagen publicada con Docker Compose
-
-Los archivos `compose.yml` y `compose.release.yml` utilizan la imagen de Docker
-Hub y no construyen el Dockerfile local.
-
-Inicia el entorno:
+Desde el root del proyecto:
 
 ```bash
 docker compose -f compose.yml -f compose.release.yml pull
@@ -682,88 +541,122 @@ docker compose -f compose.yml -f compose.release.yml up -d
 docker compose -f compose.yml -f compose.release.yml ps
 ```
 
-#### Probar Ganache
+Verás tres servicios:
 
-Despliega:
-
-```bash
-GANACHE_DEPLOY_OUTPUT="$(
-  docker compose -f compose.yml -f compose.release.yml \
-    exec -T hardhat pnpm deploy:ganache
-)"
-echo "$GANACHE_DEPLOY_OUTPUT"
+```text
+logistics-ganache
+logistics-hardhat-mainnet
+logistics-hardhat
 ```
 
-Copia la dirección mostrada:
+### Flujo completo con Ganache
 
-```bash
-export GANACHE_CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
-```
-
-Ejecuta los scripts:
+**1. Desplegar el contrato:**
 
 ```bash
 docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$GANACHE_CONTRACT_ADDRESS" \
+  exec -T hardhat pnpm deploy:ganache
+```
+
+Copia la dirección del contrato.
+
+**2. Exportar la dirección:**
+
+```bash
+export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
+```
+
+**3. Certificar el evento:**
+
+```bash
+docker compose -f compose.yml -f compose.release.yml \
+  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certify:ganache
+```
 
+**4. Verificar integridad:**
+
+```bash
 docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$GANACHE_CONTRACT_ADDRESS" \
+  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm verify:ganache
+```
 
+Resultado esperado:
+
+```text
+Hash original valido: true
+Hash alterado valido: false
+```
+
+**5. Consultar el certificado:**
+
+```bash
 docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$GANACHE_CONTRACT_ADDRESS" \
+  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certificate:ganache
 ```
 
-#### Probar hardhatMainnet
+### Flujo completo con hardhatMainnet
 
-Despliega:
+**1. Desplegar:**
 
 ```bash
 docker compose -f compose.yml -f compose.release.yml \
   exec -T hardhat pnpm deploy:hardhat-mainnet
 ```
 
-Copia la dirección:
+Copia la dirección.
+
+**2. Exportar:**
 
 ```bash
-export HARDHAT_CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
+export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
 ```
 
-Ejecuta los scripts:
+**3. Certificar:**
 
 ```bash
 docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$HARDHAT_CONTRACT_ADDRESS" \
+  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certify:hardhat-mainnet
+```
 
+**4. Verificar:**
+
+```bash
 docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$HARDHAT_CONTRACT_ADDRESS" \
+  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm verify:hardhat-mainnet
+```
 
+**5. Consultar:**
+
+```bash
 docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$HARDHAT_CONTRACT_ADDRESS" \
+  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
   hardhat pnpm certificate:hardhat-mainnet
 ```
 
-Detén el entorno:
+### Detener el entorno
+
+Conservar datos de Ganache:
 
 ```bash
 docker compose -f compose.yml -f compose.release.yml down
 ```
 
-Para borrar también el volumen de prueba:
+Eliminar todo incluido volúmenes:
 
 ```bash
 docker compose -f compose.yml -f compose.release.yml down -v
 ```
 
-### ¿Qué se necesita para que GitHub Actions funcione?
+### Comandos de referencia
 
-- El repositorio `cp-contracts-docker` creado en Docker Hub.
-- Los secretos `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` configurados en GitHub.
-- GitHub Actions habilitado para el repositorio.
-- Permiso del token de Docker Hub para escribir en el repositorio.
-- Una versión válida en `traceability-contracts/package.json`.
-- Hacer `push` directamente a `main` o fusionar un pull request hacia `main`.
+| Operación | Ganache | hardhatMainnet |
+|---|---|---|
+| Desplegar | `pnpm deploy:ganache` | `pnpm deploy:hardhat-mainnet` |
+| Certificar | `pnpm certify:ganache` | `pnpm certify:hardhat-mainnet` |
+| Verificar | `pnpm verify:ganache` | `pnpm verify:hardhat-mainnet` |
+| Consultar | `pnpm certificate:ganache` | `pnpm certificate:hardhat-mainnet` |
