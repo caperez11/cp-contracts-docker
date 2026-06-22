@@ -506,8 +506,8 @@ docker compose -f compose.yml -f compose.dev.yml up -d --build
 
 ## 10. Descargar y usar la imagen desde Docker Hub
 
-La imagen se publica automáticamente con cada `push` a `main` en:
-`USUARIO_DOCKERHUB/cp-contracts-docker`
+La imagen publicada es:
+`caperezdev11/cp-contracts-docker`
 
 ### Requisitos
 
@@ -516,12 +516,19 @@ La imagen se publica automáticamente con cada `push` a `main` en:
 
 ### Descargar e iniciar el entorno
 
+Configura la imagen y etiqueta:
+
+```bash
+export DOCKERHUB_IMAGE=caperezdev11/cp-contracts-docker
+export IMAGE_TAG=latest
+```
+
 Desde el root del proyecto:
 
 ```bash
 docker compose -f compose.yml -f compose.release.yml pull
 docker compose -f compose.yml -f compose.release.yml up -d
-docker compose -f compose.yml -f compose.release.yml ps
+docker compose -f compose.release.yml ps
 ```
 
 Verás tres servicios:
