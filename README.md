@@ -504,72 +504,66 @@ docker compose -f compose.yml -f compose.dev.yml down -v
 docker compose -f compose.yml -f compose.dev.yml up -d --build
 ```
 
-## 10. Descargar y usar la imagen desde Docker Hub
+## 10. Usar la imagen descargada de Docker Hub
 
-La imagen publicada es:
-`caperezdev11/cp-contracts-docker`
+Imagen: `caperezdev11/cp-contracts-docker`
 
 ### Requisitos
 
 - Docker
-- Docker Compose
 
-### Descargar e iniciar el entorno
-
-Configura la imagen y etiqueta:
+### Descargar la imagen
 
 ```bash
-export DOCKERHUB_IMAGE=caperezdev11/cp-contracts-docker
-export IMAGE_TAG=latest
+docker pull caperezdev11/cp-contracts-docker:latest
 ```
 
-Desde el root del proyecto:
+### Iniciar Ganache local
 
 ```bash
-docker compose -f compose.yml -f compose.release.yml pull
-docker compose -f compose.yml -f compose.release.yml up -d
-docker compose -f compose.release.yml ps
+docker run -d --name logistics-ganache \
+  -p 8545:8545 \
+  trufflesuite/ganache:latest:latest
 ```
 
-Verás tres servicios:
+### Flujo con Ganache
 
-```text
-logistics-ganache
-logistics-hardhat-mainnet
-logistics-hardhat
-```
-
-### Flujo completo con Ganache
-
-**1. Desplegar el contrato:**
+**1. Desplegar contrato:**
 
 ```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T hardhat pnpm deploy:ganache
+docker run --rm \
+  --network host \
+  -e CONTRACT_ADDRESS \
+  caperezdev11/cp-contracts-docker:latest \
+  pnpm deploy:ganache
 ```
 
 Copia la dirección del contrato.
 
-**2. Exportar la dirección:**
+**2. Exportar dirección:**
 
 ```bash
 export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
 ```
 
-**3. Certificar el evento:**
+**3. Certificar evento:**
 
 ```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
-  hardhat pnpm certify:ganache
+docker run --rm \
+  --network host \
+  -e CONTRACT_ADDRESS \
+  caperezdev11/cp-contracts-docker:latest \
+  pnpm certify:ganache
 ```
 
 **4. Verificar integridad:**
 
 ```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
-  hardhat pnpm verify:ganache
+docker run --rm \
+  --network host \
+  -e CONTRACT_ADDRESS \
+  caperezdev11/cp-contracts-docker:latest \
+  pnpm verify:ganache
 ```
 
 Resultado esperado:
@@ -579,74 +573,19 @@ Hash original valido: true
 Hash alterado valido: false
 ```
 
-**5. Consultar el certificado:**
+**5. Consultar certificado:**
 
 ```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
-  hardhat pnpm certificate:ganache
+docker run --rm \
+  --network host \
+  -e CONTRACT_ADDRESS \
+  caperezdev11/cp-contracts-docker:latest \
+  pnpm certificate:ganache
 ```
 
-### Flujo completo con hardhatMainnet
-
-**1. Desplegar:**
+### Detener servicios
 
 ```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T hardhat pnpm deploy:hardhat-mainnet
+docker stop logistics-ganache
+docker rm logistics-ganache
 ```
-
-Copia la dirección.
-
-**2. Exportar:**
-
-```bash
-export CONTRACT_ADDRESS=0xDIRECCION_DESPLEGADA
-```
-
-**3. Certificar:**
-
-```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
-  hardhat pnpm certify:hardhat-mainnet
-```
-
-**4. Verificar:**
-
-```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
-  hardhat pnpm verify:hardhat-mainnet
-```
-
-**5. Consultar:**
-
-```bash
-docker compose -f compose.yml -f compose.release.yml \
-  exec -T -e CONTRACT_ADDRESS="$CONTRACT_ADDRESS" \
-  hardhat pnpm certificate:hardhat-mainnet
-```
-
-### Detener el entorno
-
-Conservar datos de Ganache:
-
-```bash
-docker compose -f compose.yml -f compose.release.yml down
-```
-
-Eliminar todo incluido volúmenes:
-
-```bash
-docker compose -f compose.yml -f compose.release.yml down -v
-```
-
-### Comandos de referencia
-
-| Operación | Ganache | hardhatMainnet |
-|---|---|---|
-| Desplegar | `pnpm deploy:ganache` | `pnpm deploy:hardhat-mainnet` |
-| Certificar | `pnpm certify:ganache` | `pnpm certify:hardhat-mainnet` |
-| Verificar | `pnpm verify:ganache` | `pnpm verify:hardhat-mainnet` |
-| Consultar | `pnpm certificate:ganache` | `pnpm certificate:hardhat-mainnet` |
